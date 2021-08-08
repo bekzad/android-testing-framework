@@ -13,7 +13,6 @@ import kotlinx.coroutines.runBlocking
 import java.lang.Exception
 
 class FakeAndroidTasksRepository : TasksRepository {
-
     var tasksServiceData: LinkedHashMap<String, Task> = LinkedHashMap()
     private val observableTasks = MutableLiveData<Result<List<Task>>>()
 
@@ -22,9 +21,9 @@ class FakeAndroidTasksRepository : TasksRepository {
     }
 
     override suspend fun refreshTasks() {
-        CoroutineScope(Dispatchers.Main).launch {
-            observableTasks.value = getTasks()
-        }
+//        CoroutineScope(Dispatchers.Main).launch {
+        observableTasks.postValue(getTasks())
+//        }
     }
 
     override fun observeTasks(): LiveData<Result<List<Task>>> {
@@ -49,7 +48,8 @@ class FakeAndroidTasksRepository : TasksRepository {
     }
 
     override suspend fun getTask(taskId: String, forceUpdate: Boolean): Result<Task> {
-        TODO("Not yet implemented")
+        val task = tasksServiceData[taskId]
+        return task?.let { Result.Success(it) } ?: Result.Error(Exception("Not Found"))
     }
 
     override suspend fun saveTask(task: Task) {
@@ -58,11 +58,12 @@ class FakeAndroidTasksRepository : TasksRepository {
     }
 
     override suspend fun completeTask(task: Task) {
-        TODO("Not yet implemented")
+        completeTask(task.id)
     }
 
     override suspend fun completeTask(taskId: String) {
-        TODO("Not yet implemented")
+        tasksServiceData[taskId]?.isCompleted = true
+        refreshTasks()
     }
 
     override suspend fun activateTask(task: Task) {
